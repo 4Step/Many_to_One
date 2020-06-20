@@ -35,6 +35,10 @@ compare_fields <- c("FTEC", "ATEC", "LNEC", "SPEC", "CAP_15", "DIRECTION")
 
 DT <- DT[, ..fields]
 
+# Remove limited, toll and thier ramp links from graph
+free_toll_subgraph <- c(11, 12, 16, 71, 72, 75, 76, 79,  91, 92, 99)
+DT_exclude <- DT[! (FTEC %in% free_toll_subgraph), ]
+
 # To overcome intersections on limited access facilities do:
 # 1. Keep only limited access, toll roads and their ramps
 # 2. Run the walk_the_graph program and consolidate links
@@ -42,25 +46,24 @@ DT <- DT[, ..fields]
 # 4. re0run walk_the_graph for rest of the links
 # toll ramps = c(71, 72, 75, 76, 79) toll = c(91, 92), freeway = c(11, 12)
 
-DT_exclude <- DT[! (FTEC %in% c(11, 12, 71, 72, 75, 76, 79,  91, 92)), ]
 
-# Settings  
-DT <- DT[FTEC %in% c(11, 12, 71, 72, 75, 76, 79,  91, 92), ]
+# Extract toll, limited access and ramps  
+DT <- DT[FTEC %in% free_toll_subgraph, ]
 out_Free_Toll_Shp <- "Output/SF_FL_Free_Toll_network.shp"
 produce_node_file <- FALSE
 
+# Run network consolidation 
 source("4b_Walk_the_graph.R")
 
-
 # Not quite intutive but the output from walking the network is now read back
-if(!exists("sf_GeoMaster_CC")){
+if(!exists("sf_fl")){
   sf_fl <- st_read(out_Free_Toll_Shp)
 }
 
 # Merge both consolidate limited access links with rest of the links
 DT_free_toll    <- setDT(sf_fl)
 original_fields <- colnames(DT_exclude)
-DT_free_toll    <- DT_free_toll[ ,  original_fields]
+DT_free_toll    <- DT_free_toll[ ,..original_fields]
 DT              <- rbindlist(list(DT_free_toll, DT_exclude))
 
 out_Free_Toll_Shp      <- "Output/SF_FL_walked_network_v2.shp"
@@ -78,6 +81,24 @@ runTime_walkTheGraph
 runTime_mergeLineSegments
 runTime_writeShp
 
+#--------------------------------------------------------------------------------------
+# Investigate the over pass issue
+version_v1 <- "Output/SF_FL_walked_network.shp"
+version_v2 <- "Output/SF_FL_walked_network_v2.shp"
 
+sf_v1 <- st_read(version_v1)
+DT_v1 <- setDT(sf_v1)
+DT_v1 <- DT_v1[FTEC %in% c(11, 12, 91, 92), ]
 
+sf_v2 <- st_read(version_v2)
+DT_v2 <- setDT(sf_v2)
+DT_v2 <- DT_v2[FTEC %in% c(11, 12, 91, 92), c("A", "B")]
+DT_v2 <- DT_v2[ ,same_as_V1 := 1]
 
+DT_compare <- merge(DT_v1, DT_v2, 
+                    by.x = c("A", "B"), 
+                    by.y = c("A", "B"), 
+                    all.x = TRUE)
+
+overpass_issue <- DT_compare[is.na(same_as_V1), ]
+st_write(st_as_sf(overpass_issue), "Output/overpass_issue_links.shp", append = FALSE)
