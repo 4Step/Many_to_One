@@ -107,8 +107,8 @@ runTime_mergeLineSegments <-merge_end_time - merge_start_time
 # Get first and last A, B and attributes
 DT2 <- DT2[, last := .N, by = GeoMerge_ID]
 first <- DT2[GeoMerge_Order == 0, ]
-first <- first[ , c("B", "geometry") := NULL]
-last  <- DT2[GeoMerge_Order == (last - 1), c("B", "GeoMerge_ID")]
+first <- first[ , c("B", "T_ZLEV", "geometry") := NULL]
+last  <- DT2[GeoMerge_Order == (last - 1), c("B", "T_ZLEV", "GeoMerge_ID")]
 
 # Merge firt Anode, last Bnode and geometry
 first_last <- merge(first,last, by.x = "GeoMerge_ID", by.y = "GeoMerge_ID")
