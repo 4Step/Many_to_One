@@ -19,6 +19,7 @@ if(!exists("sf_GeoMaster_CC")){
 # Combined master network with centroid connectors
 DT <- setDT(sf_GeoMaster_CC)
 
+
 # Change character fields to integer fields (for simple C++ code)
 DT[, DIRECTION := 0 ]
 DT[ DIR_TRAVEL != "B" | is.na(DIR_TRAVEL), DIRECTION := 1 ]
@@ -319,8 +320,8 @@ runTime_mergeLineSegments <-merge_end_time - merge_start_time
 # Get first and last A, B and attributes
 DT2 <- DT2[, last := .N, by = GeoMerge_ID]
 first <- DT2[GeoMerge_Order == 0, ]
-first <- first[ , c("B", "geometry") := NULL]
-last  <- DT2[GeoMerge_Order == (last - 1), c("B", "GeoMerge_ID")]
+first <- first[ , c("B", "T_ZLEV", "geometry") := NULL]
+last  <- DT2[GeoMerge_Order == (last - 1), c("B", "T_ZLEV", "GeoMerge_ID")]
 
 # Merge firt Anode, last Bnode and geometry
 first_last <- merge(first,last, by.x = "GeoMerge_ID", by.y = "GeoMerge_ID")
