@@ -36,7 +36,7 @@ compare_fields <- c("FTEC", "ATEC", "LNEC", "SPEC", "CAP_15", "DIRECTION")
 DT <- DT[, ..fields]
 
 # Remove limited, toll and thier ramp links from graph
-free_toll_subgraph <- c(11, 12, 16, 71, 72, 75, 76, 79,  91, 92, 99)
+free_toll_subgraph <- c(11, 12, 16, 71, 72, 75, 76, 79,  91, 92, 97, 98, 99)
 DT_exclude <- DT[! (FTEC %in% free_toll_subgraph), ]
 
 # To overcome intersections on limited access facilities do:
@@ -83,22 +83,28 @@ runTime_writeShp
 
 #--------------------------------------------------------------------------------------
 # Investigate the over pass issue
-version_v1 <- "Output/SF_FL_walked_network.shp"
-version_v2 <- "Output/SF_FL_walked_network_v2.shp"
+do_compare_iter_regular <- TRUE
 
-sf_v1 <- st_read(version_v1)
-DT_v1 <- setDT(sf_v1)
-DT_v1 <- DT_v1[FTEC %in% c(11, 12, 91, 92), ]
+if(do_compare_iter_regular) {
 
-sf_v2 <- st_read(version_v2)
-DT_v2 <- setDT(sf_v2)
-DT_v2 <- DT_v2[FTEC %in% c(11, 12, 91, 92), c("A", "B")]
-DT_v2 <- DT_v2[ ,same_as_V1 := 1]
+  version_v1 <- "Output/SF_FL_walked_network.shp"
+  version_v2 <- "Output/SF_FL_walked_network_v2.shp"
+  
+  sf_v1 <- st_read(version_v1)
+  DT_v1 <- setDT(sf_v1)
+  DT_v1 <- DT_v1[FTEC %in% c(11, 12, 91, 92), ]
+  
+  sf_v2 <- st_read(version_v2)
+  DT_v2 <- setDT(sf_v2)
+  DT_v2 <- DT_v2[FTEC %in% c(11, 12, 91, 92), c("A", "B")]
+  DT_v2 <- DT_v2[ ,same_as_V1 := 1]
+  
+  DT_compare <- merge(DT_v1, DT_v2, 
+                      by.x = c("A", "B"), 
+                      by.y = c("A", "B"), 
+                      all.x = TRUE)
+  
+  overpass_issue <- DT_compare[is.na(same_as_V1), ]
+  st_write(st_as_sf(overpass_issue), "Output/overpass_issue_links.shp", append = FALSE)
+}
 
-DT_compare <- merge(DT_v1, DT_v2, 
-                    by.x = c("A", "B"), 
-                    by.y = c("A", "B"), 
-                    all.x = TRUE)
-
-overpass_issue <- DT_compare[is.na(same_as_V1), ]
-st_write(st_as_sf(overpass_issue), "Output/overpass_issue_links.shp", append = FALSE)
