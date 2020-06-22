@@ -132,7 +132,7 @@ Overall, the program consolidates 487,764 arcs to 198,156 which is quite close t
 
 2.	There are duplicate nodes in GeoMaster (same location but 3 or more different IDs).  The current tool picks the one it encounters first (which is not a logical pattern for us to know and to implement in this new tool). So, this ends up reporting inconsistent A-B links between the two version tools even though they represent exactly the same link (we know this by comparing geometry).  The only way to overcome this is as, Mark suggested to Chris, find the final HwyIds remained at the end (in the current process) and remove the remaining duplicates from the GeoMaster.
 
-The new program now runs in under 3 minutes without the  “logger” and turning on the program writes detailed analysis to a text file (as shown in the above figure Program Insights). Note the size is ~ 500 MB and takes 8 minutes. The current logger is using standard R output where the layered information comes from C++ -> R console -> R prints out a text file instead of directly from C++ takes would take only a few seconds. This could be improved in the next version as required.
+The new program now runs in under 3 minutes without the  “logger” and turning on the logger, the program writes detailed analysis to a text file (as shown in the above figure Program Insights). Note the size is ~ 500 MB and takes 1 additional minute totaling to under 4 minutes. The current logger is using standard R output where the layered information comes from C++ -> R console -> R prints out a text file instead of directly from C++ takes would take only a few seconds. This could be improved in the next version if required.
 
 
 # Design / Methodology
