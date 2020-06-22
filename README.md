@@ -140,6 +140,36 @@ The new program now runs in under 3 minutes without the  “logger” and turnin
 ![Intersection Criteria](figures/program_criteria.PNG)
 
 # User Guide
+The program is run from R / RStudio.  
+Open "Many_to_One.Rproj" to see
+
+![Many-to-One.Rproj](figures/Many_to_One_Rproj.PNG)
+
+**User_Interface.R**:   
+Shows User Settings, Input / Output / Interim Files  
+
+> **User Settings**  
+> *This is the User Interface for the "walk_the_graph" model*  
+- write_Interim       <- FALSE  
+- run_prepSteps       <- FALSE  
+- update_GeoMaster_XY <- TRUE  
+- update_CenCon_XY    <- FALSE  
+- do_reverse          <- TRUE
+>
+> *write debug output*
+- debug               <- 1 = yes, 0 = no
+>
+> *Iterative run will first consolidate limited access facilities (subgraph) then runs rest of the network*      
+- do_iterative_run    <- FALSE   
+>
+> *Works only when do_iterative_run = TRUE, also expects a regular run output exists, which is run from "do_iterative_run == FALSE"*     
+- do_compare_iter_regular <- FALSE  
+
+
+**List of I/O Files** :  
+The following are the list of input and output files. The output is either or set based on above *do_iterative_run* setting. If true writes the second set of file ("_iter") else the first set.
+
+![Input / Output / Interim Files](figures/List_of_IO_Files.PNG)
 
 
 # Build and Test
