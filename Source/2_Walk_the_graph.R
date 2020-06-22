@@ -13,7 +13,7 @@ start_time <- Sys.time()
 
 # USer can read directly if not in memory
 if(!exists("sf_GeoMaster_CC")){
-  sf_GeoMaster_CC <- st_read("Output/GeoMaster_Centroid_Connectors.shp")
+  sf_GeoMaster_CC <- st_read(sf_GeoMaster_CC_ShpFile)
 }
 
 # Combined master network with centroid connectors
@@ -98,9 +98,8 @@ runTime_Cpp_Compiler <- compile_end_time - compile_start_time
 start_time <- Sys.time()
 
 # isVisited <- graphWalk(DT, dt_lookup, A_lookup, B_lookup, compare_fields) # _v1, _v3
-debug <- 0
 if(debug == 1){
-  sink("Output/graphWalk.log")
+  sink(debug_outFile)
   isVisited <- graphWalk(DT, dt_lookup, dt_merge, A_lookup, B_lookup, compare_fields, debug)
   sink()
 } else{
@@ -111,8 +110,8 @@ end_time <- Sys.time()
 runTime_walkTheGraph <- end_time - start_time
 
 # Debug:: walk the graph for a selected A-B link and get next_Bnode (B -> next_Bnode)
-debug <- FALSE
-if(debug) {
+interactive_debug <- FALSE
+if(interactive_debug) {
   
   lst_Bto   <- createList(dt_lookup, "A" , "bnodes");
   lst_Bfrom <- createList(dt_merge, "B" , "anodes");
@@ -163,10 +162,9 @@ if(debug) {
   # current_Bnode   <- 114231    # 114231
   
   # Gets the next A-B
-  debug <- 1
   Get_next_Bnode(lst_Bfrom, lst_Bto, 
                   start_seg_Anode, current_Anode, current_Bnode,
-                  Atz, Bfz, index_A,  index_B, uni_bi, debug)
+                  Atz, Bfz, index_A,  index_B, uni_bi, 1)
 
   
   # Other functions (find A-B index, subset, nextBnode)
@@ -214,8 +212,8 @@ setorderv(DT2, c("GeoMerge_ID", "GeoMerge_Order"))
 
 #--------------------------------------------------------------------------------------
 # For Demo PPT 
-debug <- FALSE
-if(debug) {
+interactive_debug <- FALSE
+if(interactive_debug) {
     # For debugging
     n1 <- DT2 %>% filter(A == 1244 & B == 66778) %>% select(fields, "row_id", "geometry")
     n2 <- DT2 %>% filter(A == 66778 & B == 66831) %>% select(fields, "row_id", "geometry")
@@ -257,7 +255,7 @@ if(debug) {
     st_write(opn_shp, "Output/overpass_network.shp", append = FALSE)
 }
 
-#--------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------
 # Function to merge all segments
 mergeGeom <- function(geom_vec){
   x <-  st_sfc(st_multilinestring(list(do.call(rbind, lapply(geom_vec, function(x){x[[1]]})))))
@@ -265,56 +263,16 @@ mergeGeom <- function(geom_vec){
 }
 
 
-# # Function to merge all segments
-# mergeGeom_purrr <- function(df){
-#   
-#   df2 <- df %>% arrange(GeoMerge_Order)
-#   x <-  st_sfc(st_multilinestring(list(do.call(rbind, lapply(df2$geometry, function(x){x[[1]]})))))
-#   
-#   # these are specified outside
-#   cnt <<- cnt + 1
-#   if(cnt %% 10000 == 0){
-#     print(paste("Processing row number", cnt,  "of", max_rows)) 
-#   }
-#   
-#   return(x)
-# }
-
-
-#-------------------------------------------------------------------------------------------------
 merge_start_time <- Sys.time()
 
+# Sort by id, and sequence of links in the segment
 setorderv(DT2, c("GeoMerge_ID", "GeoMerge_Order"))
 
 # Apply function to merge
-# DT2 <- DT2[order(GeoMerge_Order),.SD[1:24], by = GeoMerge_ID]
-
 merged_geometry <- DT2[ ,lapply(.SD, mergeGeom), by=GeoMerge_ID, .SDcols=c("geometry")]
-
 
 merge_end_time <- Sys.time()
 runTime_mergeLineSegments <-merge_end_time - merge_start_time
-
-
-#-------------------------------------------------------------------------------------------------
-# merge_start_time <- Sys.time()
-# 
-# # Purrr method
-# DT2[, N_segments := .N, by = "GeoMerge_ID"]
-# DT3 <- DT2[N_segments > 1, ]
-# cnt <- 0
-# max_rows <- nrow(DT3)
-# 
-# merged_geometry_purrr <- DT3 %>% 
-#   setDF() %>% 
-#   group_by(GeoMerge_ID) %>% 
-#   nest() %>% 
-#   mutate(geo2 = map(data, mergeGeom_purrr)) %>% 
-#   unnest()
-#   
-# merge_end_time <- Sys.time()
-# runTime_mergeLineSegments <-merge_end_time - merge_start_time  
-# runTime_mergeLineSegments
 #-------------------------------------------------------------------------------------------------
 
 # Get first and last A, B and attributes
@@ -332,16 +290,13 @@ sf_fl <- st_as_sf(first_last_geom)
 
 merge_end_time <- Sys.time()
 runTime_mergeLineSegments <-merge_end_time - merge_start_time
-
-# # Check demo example
-# first_last[GeoMerge_ID == 108731, ]
-
 #--------------------------------------------------------------------------------------
+# Export shape file
 write_start_time <- Sys.time()
 
 # Set projection
 st_crs(sf_fl) = 26917
-st_write(sf_fl, "Output/SF_FL_walked_network.shp", append = FALSE)
+st_write(sf_fl, consoildate_links_ShpFile, append = FALSE)
 
 
 # export corresponding nodes for the shape file
@@ -351,7 +306,7 @@ sf_fl_Bnodes <- unique(dt$B)
 sf_fl_nodes <- unique(sf_fl_Anodes, sf_fl_Bnodes)
 
 # read all nodes
-sf_allNodes <- st_read("Output/node_ids.shp")
+sf_allNodes <- st_read(final_nodeIDs_ShpFile)
 
 sf_fl_Nodes <- sf_allNodes %>% 
   filter(Hwy_NodeId %in% sf_fl_nodes) %>% 
@@ -362,45 +317,15 @@ fl_xy_coords <- st_coordinates(sf_fl_Nodes)
 sf_fl_Nodes <- cbind(sf_fl_Nodes, fl_xy_coords)
 
 st_crs(sf_fl_Nodes) = 26917
-st_write(sf_fl_Nodes, "Output/SF_FL_walked_network_nodes.shp", append = FALSE)
+st_write(sf_fl_Nodes, consoildate_links_Node_ShpFile, append = FALSE)
 
 write_end_time <- Sys.time()
 runTime_writeShp <- write_end_time - write_start_time
 
 #--------------------------------------------------------------------------------------
-# Runtime
-runTime_read_shapeFiles
-runTime_prepareInputs
-runTime_updateXY
-runTime_append_user_NodeIds
-runTime_reverse
-
-runTime_Cpp_dataStructures
-runTime_Cpp_Compiler
-runTime_walkTheGraph
-runTime_mergeLineSegments
-runTime_writeShp
-
 
 #--------------------------------------------------------------------------------------
-# C++ geometry merg function
-#--------------------------------------------------------------------------------------
-# xy2 <- DT2[GeoMerge_ID == 41636, ]
-# xy3 <- DT2[GeoMerge_ID %in% c(41636, 120115) ]
-# 
-# # sf_xy <- st_as_sf(xy2)
-# # st_write(sf_xy, "Output/demo_example_41636.shp", append = FALSE)
-# 
-# sourceCpp("merge_Geom.cpp")
-# 
-# a1 <- MergeGeometry(xy3,  "GeoMerge_ID",  "GeoMerge_Order", unique(xy3$GeoMerge_ID))
-# 
-# # a2 <- MergeGeometry2(xy2,  "GeoMerge_ID",  "GeoMerge_Order", unique(xy2$GeoMerge_ID))
-# 
-# header <- c('"wkt_geom";"GeoMerge_ID";"A";"B"')
-# 
-# write.table(header, "Output/GeoMerge_ID_41636_120115.csv", row.names = FALSE, quote = FALSE, append = FALSE, col.names = FALSE)
-# write.table(a1, "Output/GeoMerge_ID_41636_120115.csv", row.names = FALSE, quote = FALSE, append = TRUE, col.names = FALSE)
+
 
 
 

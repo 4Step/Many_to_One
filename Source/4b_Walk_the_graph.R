@@ -2,7 +2,6 @@
 #-------------------------------------------------------------------------------------------------
 # Part - 3
 #-------------------------------------------------------------------------------------------------
-
 # List of intersections & next_nodes by Anode
 setDT(DT)[ , NumA := .N, by = "A"]
 DT[ , bnodes := list(list(B)), by = "A"]
@@ -63,9 +62,8 @@ runTime_Cpp_Compiler <- compile_end_time - compile_start_time
 start_time <- Sys.time()
 
 # isVisited <- graphWalk(DT, dt_lookup, A_lookup, B_lookup, compare_fields) # _v1, _v3
-debug <- 0
 if(debug == 1){
-  sink("Output/graphWalk.log")
+  sink(debug_outFile)
   isVisited <- graphWalk(DT, dt_lookup, dt_merge, A_lookup, B_lookup, compare_fields, debug)
   sink()
 } else{
@@ -138,7 +136,7 @@ if(produce_node_file){
   sf_fl_nodes <- unique(sf_fl_Anodes, sf_fl_Bnodes)
   
   # read all nodes
-  sf_allNodes <- st_read("Output/node_ids.shp")
+  sf_allNodes <- st_read(final_nodeIDs_ShpFile)
   
   sf_fl_Nodes <- sf_allNodes %>% 
     filter(Hwy_NodeId %in% sf_fl_nodes) %>% 

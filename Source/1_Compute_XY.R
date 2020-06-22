@@ -15,12 +15,12 @@ do_reverse          <- TRUE
 # Read shape files
 readshp_start_time <- Sys.time()
 
-sf_GM          <- st_read("Input/GeoMaster.shp") 
-sf_centroids   <- st_read("Input/Zone_Centroids.shp")
-sf_CC          <- st_read("Input/Centroid_Connectors.shp")
+sf_GM          <- st_read(geoMaster_shpFile) 
+sf_centroids   <- st_read(zone_centroids_ShpFile)
+sf_CC          <- st_read(zone_cC_ShpFile)
 
 # Read User Specified Hwy Node ids
-sf_nodeIds       <- st_read("Input/Hwy_NodeIds.shp") 
+sf_nodeIds       <- st_read(User_NodeIDs_shpFile) 
 st_crs(sf_nodeIds) = 26917
 
 readshp_end_time <- Sys.time()
@@ -176,7 +176,7 @@ GeoMaster_nodes <- GeoMaster_nodes[V1 == 1, ]
 # Write GeoMaster endpoints  
 if(write_Interim){
   sf_GMNodes <- st_as_sf(GeoMaster_nodes, coords = c("X", "Y"), crs = 26917)
-  write_sf(sf_GMNodes, "Output/GeoMaster_Nodes.shp")
+  write_sf(sf_GMNodes, GeoMaster_node_shpFile)
 }
 
 
@@ -207,7 +207,7 @@ if(write_Interim){
   c2 <- unique(check$Hwy_NodeId)
   unmatched_nodes <- c1[!(c1 %in% c2)]
   sf_node_unmatch <- sf_nodeIds2 %>% filter(Hwy_NodeId %in% unmatched_nodes)
-  st_write(sf_node_unmatch, "Output/sf_node_unmatch.shp", append = FALSE)
+  st_write(sf_node_unmatch, review_centroid_xy_ShpFile, append = FALSE)
 }
 
 # STEP 3: Generate Node Ids for all other nodes (User NOT specified nodes)
@@ -247,7 +247,7 @@ df_allNodeIds <- df_allNodeIds[, duplicate := NULL]
 # Write all node IDs
 if(write_Interim){
   sf_allNodes <- st_as_sf(df_allNodeIds, coords = c("X", "Y"), crs = 26917)
-  write_sf(sf_allNodes, "Output/node_ids.shp")
+  write_sf(sf_allNodes, final_nodeIDs_ShpFile)
 }
 
 prep_end_time <- Sys.time()
@@ -358,8 +358,8 @@ if(do_reverse){
   
   
   if(write_Interim){
-    st_write(sf_CC_rev,  "Output/Centroid_Connectors_reverse.shp", append = FALSE)
-    st_write(sf_cc_both, "Output/Centroid_Connectors_both.shp", append = FALSE)
+    st_write(sf_CC_rev,  sf_CC_rev_shpFile, append = FALSE)
+    st_write(sf_cc_both, sf_cc_both_ShpFile, append = FALSE)
   }
   
   
@@ -392,7 +392,7 @@ sf_GeoMaster_CC <- st_as_sf(df_GM_CC)
 
 if(write_Interim){
   write_start_time <- Sys.time()
-  st_write(sf_GeoMaster_CC, "Output/GeoMaster_Centroid_Connectors.shp", append = FALSE)
+  st_write(sf_GeoMaster_CC, sf_GeoMaster_CC_ShpFile, append = FALSE)
   write_end_time <- Sys.time()
   print(paste(write_end_time - write_start_time))
 }
