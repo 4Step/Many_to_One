@@ -5,13 +5,14 @@
 #User Settings
 #---------------------------------------------------------------------------------------------------------------
 # This is the User Interface for the "walk_the_graph" model
-write_Interim       <- FALSE
+unzip               <- FALSE
+write_Interim       <- TRUE
 run_prepSteps       <- FALSE
 update_GeoMaster_XY <- TRUE
 update_CenCon_XY    <- FALSE
 do_reverse          <- TRUE
 
-debug               <- 1          # debug = 1, write debug output
+debug               <- 0          # debug = 1, write debug output
 
 do_iterative_run    <- FALSE      # Iterative run will first consolidate limited access facilities (subgraph) then runs rest of the network
 do_compare_iter_regular <- FALSE  # Works only when do_iterative_run = TRUE, also expects a regular run output exists, which is run from "do_iterative_run == FALSE"
@@ -20,10 +21,16 @@ do_compare_iter_regular <- FALSE  # Works only when do_iterative_run = TRUE, als
 # List of files
 #---------------------------------------------------------------------------------------------------------------
 # List of Input Files
-geoMaster_shpFile          <- "Input/GeoMaster.shp"
-zone_centroids_ShpFile     <- "Input/Zone_Centroids.shp"
-zone_cC_ShpFile            <- "Input/Centroid_Connectors.shp"
-User_NodeIDs_shpFile       <- "Input/Hwy_NodeIds.shp" 
+geoMaster_zipFile          <- "Input/GeoMaster.zip"
+zone_centroids_zipFile     <- "Input/Zone_Centroids.zip"
+zone_cC_zipFile            <- "Input/Centroid_Connectors.zip"
+User_NodeIDs_zipFile       <- "Input/Hwy_NodeIds.zip" 
+
+# List of Input Files (or provide shapefiles)
+geoMaster_shpFile          <- "Input/temp/GeoMaster.shp"
+zone_centroids_ShpFile     <- "Input/temp/Zone_Centroids.shp"
+zone_cC_ShpFile            <- "Input/temp/Centroid_Connectors.shp"
+User_NodeIDs_shpFile       <- "Input/temp/Hwy_NodeIds.shp"
 
 # Interim file
 GeoMaster_node_shpFile     <- "Output/GeoMaster_Nodes.shp"
@@ -48,13 +55,20 @@ consoildate_links_iter_Node_ShpFile <- "Output/SF_FL_walked_network_nodes_v2.shp
 #---------------------------------------------------------------------------------------------------------------
 start_all_time <- Sys.time()
 
+# unzip shape files to Output/temp
+if(unzip){
+  source("Source/0_unzipFiles.R")
+  # wait for unzip to finish writing
+  # Sys.sleep(1000)
+}
+
 # Prepare ONE network file "GeoMaster_Centroid_Connectors.shp" with:
 #   Hwy Links + reverse direction for bi-directional links, 
 #   Centroid connectors Links + reverse direction
 #   Centroid Nodes + User Specified Nodes + All other remaining Highway Nodes
 
 if(run_prepSteps){
-  source("1_compute_XY.R")
+  source("Source/1_compute_XY.R")
 }
 
 # If all the input is correct, 
@@ -65,9 +79,9 @@ if(run_prepSteps){
 
 # Run program (assumes at least overpass are coded correctly)
 if(!do_iterative_run){
-  source("2_Walk_the_graph.R")
+  source("Source/2_Walk_the_graph.R")
 } else{
-  source("4a_iterating_subgraphs.R")
+  source("Source/4a_iterating_subgraphs.R")
 }
 
 
@@ -76,11 +90,17 @@ if(!do_iterative_run){
 #  - first run the model with do_iterative_run   <- FALSE 
 #  - second run the model with do_iterative_run   <- TRUE  & do_compare_iter_regular <- TRUE
 if(do_compare_iter_regular){
-    source("4c_check_for_overpass_issue.R")
+    source("Source/4c_check_for_overpass_issue.R")
 }
 
 end_all_time <- Sys.time()
 runTime_total <- end_all_time - start_all_time
+
+
+# Delete unzipped files
+if(unzip){
+  unlink("Input/temp", recursive=TRUE)
+}
 
 #---------------------------------------------------------------------------------------------------------------
 # Print Runtime

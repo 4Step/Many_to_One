@@ -7,10 +7,10 @@ library(sf)
 #-------------------------------------------------------------------------------------------------------
 # To DO this goes into GUI file
 # User Settings
-write_Interim       <- FALSE
-update_GeoMaster_XY <- TRUE
-update_CenCon_XY    <- FALSE
-do_reverse          <- TRUE
+# write_Interim       <- FALSE
+# update_GeoMaster_XY <- TRUE
+# update_CenCon_XY    <- FALSE
+# do_reverse          <- TRUE
 
 # Read shape files
 readshp_start_time <- Sys.time()

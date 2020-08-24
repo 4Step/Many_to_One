@@ -88,7 +88,7 @@ runTime_Cpp_dataStructures <- end_time - start_time
 # Compile C++ code
 compile_start_time <- Sys.time()
 
-sourceCpp("walk_the_graph_v3.cpp")
+sourceCpp("Source/walk_the_graph_v3.cpp")
 
 compile_end_time <- Sys.time()
 runTime_Cpp_Compiler <- compile_end_time - compile_start_time
